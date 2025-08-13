@@ -1,0 +1,24 @@
+% 1. dlnetwork 객체 불러오기 (이전 코드와 동일)
+load('mnist_net_logits.mat', 'net_logits');
+
+% 2. dlquantizer 객체 생성 (이전 코드와 동일)
+dlquantobj = dlquantizer(net_logits, 'ExecutionEnvironment', 'FPGA');
+[XCalib, ~] = digitTrain4DArrayData;
+dlquantobj.calibrate(XCalib);
+dlquantobj.quantize();
+
+% 3. ProcessorConfig 객체 생성
+% 범용 HDL 코드 생성을 위해 dlhdl.ProcessorConfig 객체를 생성합니다.
+hPC = dlhdl.ProcessorConfig;
+
+% 4. 타겟 플랫폼을 'Generic Deep Learning Processor'로 설정
+% 이 설정을 통해 특정 비트스트림 없이도 HDL 코드 생성이 가능합니다.
+hPC.TargetPlatform = 'Generic Deep Learning Processor';
+
+hdlsetuptoolpath('ToolName', 'Xilinx Vivado', 'AllowUnsupportedToolVersion', true, 'ToolPath', 'C:\Xilinx\2025.1\Vivado\bin\vivado.bat');
+
+% 5. HDL 코드 생성
+% dlhdl.buildProcessor 함수를 사용하여 Verilog IP 코어를 생성합니다.
+% 이 함수는 Verilog 파일과 함께 IP 코어 리포트 등을 생성합니다.
+dlhdl.buildProcessor(hPC);
+fprintf('Verilog IP 코드가 "dlhdl_prj/ipcore" 폴더에 생성되었습니다.\n');
