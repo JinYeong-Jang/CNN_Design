@@ -2,7 +2,7 @@
 2025 차세대반도체 경진대회 팀
 
 # 타겟 모델 구조
-본 프로젝트에서 사용된 CNN 모델은 MNIST 숫자 데이터 0/1 분류에 최적화되어 있으며 <br>
+본 프로젝트에서 사용된 CNN 모델은 MNIST 숫자 데이터 0/1 분류에 최적화되어 있으며 
 Convolution Layer, ReLU, MaxPooling, Fully Connected(FC) 레이어로 구성되어 있습니다.<br>
 정확도와 하드웨어 최적화 설계를 고려하여 설계를 진행하였습니다.
 
