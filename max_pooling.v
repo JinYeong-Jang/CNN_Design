@@ -8,7 +8,7 @@
 `timescale 1ns / 1ps
 
 module max_pooling #(
-    parameter In_d_W=8  //input data width
+    parameter In_d_W=32  //input data width
 ) (
     input clk,
     input rst,
