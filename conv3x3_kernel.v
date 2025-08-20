@@ -1,25 +1,29 @@
-// 3x3 Convolution (한 커널) - 9개 병렬 곱셈 + 가중합 + bias
 module conv3x3_kernel #(
-    parameter integer WI    = 8,   // 입력/가중치 비트폭 (signed)
-    parameter integer BW    = 32,  // bias 비트폭 (signed)
-    parameter integer ACCW  = 32   // 누산/출력 비트폭 (signed)
+    parameter integer WI    = 8,   // input/weigh bit width
+    parameter integer BW    = 32,  // bias bit width (signed)
+    parameter integer ACCW  = 32   // acc bit width (signed)
 )(
-    input                         iClk,
+    input                         iClk,        // Rising edge
     input                         iRsn,        // active-low sync reset
-    input                         iInValid,
+    input                         iInValid,    // Input data valid signal
 
-    // 각 행당 3픽셀: {left, mid, right}, 총 3*WI 비트
-    input      [3*WI-1:0]         iWindowInRow1,  // top row
-    input      [3*WI-1:0]         iWindowInRow2,  // middle row
-    input      [3*WI-1:0]         iWindowInRow3,  // bottom row
+    input      [3*WI-1:0]         iWindowInRow1,   // 3x3 window input, row 1
+    input      [3*WI-1:0]         iWindowInRow2,   // 3x3 window input, row 2
+    input      [3*WI-1:0]         iWindowInRow3,   // 3x3 window input, row 3
 
     output reg                    oOutValid,
     output reg signed [ACCW-1:0]  oOutData
 );
 
+    // ---------------------------------
+    // Corrected parameter declaration
+    // ---------------------------------
+    localparam DATAW = WI;
+    localparam WW    = WI;
+    localparam PRODW = DATAW + WW; // Product width
 
     // ---------------------------------
-    // 가중치/바이어스 ROM
+    // weight/bias ROM
     // ---------------------------------
     reg signed [WW-1:0] weight_mem [0:8];
     reg signed [BW-1:0] bias_mem   [0:0];
@@ -35,7 +39,7 @@ module conv3x3_kernel #(
     wire signed [BW-1:0] b;
 
     // product results
-    wire signed [DATAW+WW-1:0] p00, p01, p02,
+    wire signed [PRODW-1:0] p00, p01, p02,
                                p10, p11, p12,
                                p20, p21, p22;
 
@@ -48,9 +52,6 @@ module conv3x3_kernel #(
         $readmemh("bias.mem",    bias_mem);
     end
 
-    // ---------------------------------
-    // 입력/가중치 wire 선언부
-    // ---------------------------------
     // ---------------------------------
     // input data assign
     // ---------------------------------
@@ -82,7 +83,7 @@ module conv3x3_kernel #(
     assign b   = bias_mem[0];
 
     // ---------------------------------
-    // 곱셈기 인스턴스
+    // mul instance
     // ---------------------------------
     mul #(.WI(WI)) u_mul_00 (.w(w00), .x(a00), .y(p00));
     mul #(.WI(WI)) u_mul_01 (.w(w01), .x(a01), .y(p01));
