@@ -77,7 +77,6 @@ module four_conv3x3_kernel #(
 
     wire v0,v1,v2,v3;
     wire signed [ACCW-1:0] y0,y1,y2,y3;
-    assign oValid4 = {v3,v2,v1,v0};
 
     conv3x3_kernel #(.WI(WI),.BW(BW),.ACCW(ACCW)) PE0 (
         .iClk(iClk), .iRsn(iRsn), .iInValid(iInValid),
@@ -103,13 +102,25 @@ module four_conv3x3_kernel #(
         .conv_weight(w_flat3), .conv_bias(b3),
         .oOutValid(v3), .oOutData(y3)
     );
-
-    // 출력 레지스터 (선택)
+    
+    // ---------- 출력 정렬: data와 valid를 "같은 단계" 레지스터 ----------
+    reg [3:0] oValid4_r;
     always @(posedge iClk) begin
         if (!iRsn) begin
-            oData0 <= 0; oData1 <= 0; oData2 <= 0; oData3 <= 0;
+            oValid4_r <= 4'b0;
+            oData0    <= '0;
+            oData1    <= '0;
+            oData2    <= '0;
+            oData3    <= '0;
         end else begin
-            oData0 <= y0; oData1 <= y1; oData2 <= y2; oData3 <= y3;
+            // 커널 출력(v*, y*)는 LAT=1 → 여기서 1단 더 넣어 data/valid 같이 정렬
+            oValid4_r <= {v3, v2, v1, v0};
+            oData0    <= y0;
+            oData1    <= y1;
+            oData2    <= y2;
+            oData3    <= y3;
         end
     end
+    assign oValid4 = oValid4_r;  // valid도 data와 같은 클럭에 유효
+
 endmodule
