@@ -5,39 +5,39 @@ module pool_relu #(
     input  wire                      clk,
     input  wire                      clr,         // sync, active-high
     input  wire                      in_valid,    // 1 pixel / clk
-    input  wire signed [In_d_W-1:0]  in_data,     // signed pixel
+    input  wire signed [In_d_W-1:0]  in_data,     // [31:0]signed pixel 
 
     output reg                       out_valid,
-    output reg signed [In_d_W-1:0]   out_data
+    output reg signed [In_d_W-1:0]   out_data // [31:0]
 );
 
     localparam S_LOAD_ODD  = 1'b0;
     localparam S_LOAD_EVEN = 1'b1;
 
-    reg state;
+    reg state; // 0 = odd row, 1 = even row
 
     // Flattened odd-row buffer (W * In_d_W bits)
-    reg signed [In_d_W*W-1:0] odd_row;
+    reg signed [In_d_W*W-1:0] odd_row; // [831:0]
 
     // Column counter 0..W-1
-    reg [$clog2(W):0] col_cnt;
+    reg [$clog2(W):0] col_cnt; // [5:0]
 
     // Even-row shift regs (hold previous two samples)
     reg signed [In_d_W-1:0] even_s0;  // previous sample
     reg signed [In_d_W-1:0] even_s1;  // older sample
 
     // Signed max and ReLU
-    function [In_d_W-1:0] smax2;
+    function [In_d_W-1:0] maxpool;
         input signed [In_d_W-1:0] a, b;
         begin
-            if (a >= b) smax2 = a; else smax2 = b;
+            if (a >= b) maxpool = a; else maxpool = b;
         end
     endfunction
 
-    function [In_d_W-1:0] relu_s;
+    function [In_d_W-1:0] relu;
         input signed [In_d_W-1:0] x;
         begin
-            if (x[In_d_W-1]) relu_s = {In_d_W{1'b0}}; else relu_s = x;
+            if (x[In_d_W-1]) relu = {In_d_W{1'b0}}; else relu = x;
         end
     endfunction
 
@@ -50,9 +50,9 @@ module pool_relu #(
     // >>> Combinational 2x2 pooling for "this" cycle window
     // bottom-left  should be previous sample (even_s0)
     // bottom-right should be current sample  (in_data)
-    wire signed [In_d_W-1:0] max_ab_now = smax2(odd_pix_left,  odd_pix_right); // top row
-    wire signed [In_d_W-1:0] max_cd_now = smax2(even_s0,       in_data);       // bottom row
-    wire signed [In_d_W-1:0] pool_now   = smax2(max_ab_now,    max_cd_now);    // 2x2 max
+    wire signed [In_d_W-1:0] max_ab_now = maxpool(odd_pix_left,  odd_pix_right); // top row
+    wire signed [In_d_W-1:0] max_cd_now = maxpool(even_s0,       in_data);       // bottom row
+    wire signed [In_d_W-1:0] pool_now   = maxpool(max_ab_now,    max_cd_now);    // 2x2 max
 
     always @(posedge clk) begin
         if (clr) begin
@@ -71,9 +71,9 @@ module pool_relu #(
                     if (in_valid) begin
                         // Write current odd-row pixel into flattened buffer
                         odd_row[(In_d_W*(col_cnt+1))-1 -: In_d_W] <= in_data;
-                        col_cnt <= col_cnt + 1'b1;
+                        col_cnt <= col_cnt + 1;
 
-                        if (col_cnt + 1'b1 == W) begin
+                        if (col_cnt + 1 == W) begin
                             state   <= S_LOAD_EVEN;
                             col_cnt <= 0;
                             // Clear even-row shifters
@@ -92,13 +92,13 @@ module pool_relu #(
                         // When col_cnt is odd, we have [col_cnt-1, col_cnt] window ready
                         if (col_cnt[0] == 1'b1) begin
                             // Use combinational pool_now to avoid 1-cycle latency
-                            out_data  <= relu_s(pool_now);
+                            out_data  <= relu(pool_now);
                             out_valid <= 1'b1;
                         end
 
-                        col_cnt <= col_cnt + 1'b1;
+                        col_cnt <= col_cnt + 1;
 
-                        if (col_cnt + 1'b1 == W) begin
+                        if (col_cnt + 1 == W) begin
                             state   <= S_LOAD_ODD;
                             col_cnt <= 0;
                         end
@@ -110,4 +110,5 @@ module pool_relu #(
         end
     end
 endmodule
+
 
