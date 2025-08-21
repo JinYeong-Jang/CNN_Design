@@ -1,4 +1,4 @@
-module conv_rowpair_pool_relu #(
+module pool_relu #(
     parameter In_d_W = 32,
     parameter W      = 26
 )(
@@ -110,3 +110,4 @@ module conv_rowpair_pool_relu #(
         end
     end
 endmodule
+
