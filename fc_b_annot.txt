@@ -1,0 +1,1 @@
+addr=0000  hex=00000006  (bias for out_ch=0)
