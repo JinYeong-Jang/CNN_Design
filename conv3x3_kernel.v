@@ -1,15 +1,18 @@
 module conv3x3_kernel #(
-    parameter integer WI    = 8,   // input/weigh bit width
-    parameter integer BW    = 32,  // bias bit width (signed)
-    parameter integer ACCW  = 32   // acc bit width (signed)
+    parameter integer WI    = 8,
+    parameter integer BW    = 32,
+    parameter integer ACCW  = 32
 )(
-    input                         iClk,        // Rising edge
-    input                         iRsn,        // active-low sync reset
-    input                         iInValid,    // Input data valid signal
+    input                         iClk,
+    input                         iRsn,        // active-low
+    input                         iInValid,
 
-    input      [3*WI-1:0]         iWindowInRow1,   // 3x3 window input, row 1
-    input      [3*WI-1:0]         iWindowInRow2,   // 3x3 window input, row 2
-    input      [3*WI-1:0]         iWindowInRow3,   // 3x3 window input, row 3
+    input      [3*WI-1:0]         iWindowInRow1,
+    input      [3*WI-1:0]         iWindowInRow2,
+    input      [3*WI-1:0]         iWindowInRow3,
+
+    input  signed [WI*9-1:0]      conv_weight,    // {w00,w01,...,w22}
+    input  signed [BW-1:0]        conv_bias,         // bias for this output channel
 
     output reg                    oOutValid,
     output reg signed [ACCW-1:0]  oOutData
@@ -22,11 +25,10 @@ module conv3x3_kernel #(
     localparam WW    = WI;
     localparam PRODW = DATAW + WW; // Product width
 
+
     // ---------------------------------
     // weight/bias ROM
     // ---------------------------------
-    reg signed [WW-1:0] weight_mem [0:8];
-    reg signed [BW-1:0] bias_mem   [0:0];
 
     wire signed [DATAW-1:0] a00, a01, a02,
                             a10, a11, a12,
@@ -47,11 +49,24 @@ module conv3x3_kernel #(
     wire signed [ACCW-1:0] sum_products;
     wire signed [ACCW-1:0] sum_with_bias;
 
-    initial begin
-        $readmemh("weights.mem", weight_mem);
-        $readmemh("bias.mem",    bias_mem);
-    end
+    // base index(OC)
+    wire [7:0] base;
 
+    //level 1 wire & reg
+    wire signed [ACCW-1:0] s0_l1, s1_l1, s2_l1, s3_l1, s4_l1;
+    reg signed [ACCW-1:0] s0_r1, s1_r1, s2_r1, s3_r1, s4_r1;
+    reg                   v_r1;
+
+    //level 2 wire
+    wire signed [ACCW-1:0] s0_l2, s1_l2, s2_l2; 
+
+    //level 3 wire & reg
+    wire signed [ACCW-1:0] s0_l3, s1_l3;
+    reg signed [ACCW-1:0] s0_r3, s1_r3;
+    reg                   v_r3;
+
+
+    
     // ---------------------------------
     // input data assign
     // ---------------------------------
@@ -70,17 +85,15 @@ module conv3x3_kernel #(
     // ---------------------------------
     // weight/bias assign
     // ---------------------------------
-    assign w00 = weight_mem[0];
-    assign w01 = weight_mem[1];
-    assign w02 = weight_mem[2];
-    assign w10 = weight_mem[3];
-    assign w11 = weight_mem[4];
-    assign w12 = weight_mem[5];
-    assign w20 = weight_mem[6];
-    assign w21 = weight_mem[7];
-    assign w22 = weight_mem[8];
-
-    assign b   = bias_mem[0];
+    assign w00 =  conv_weight[(1)*WW-1 -: WW];
+    assign w01 =  conv_weight[(2)*WW-1 -: WW];
+    assign w02 =  conv_weight[(3)*WW-1 -: WW];
+    assign w10 =  conv_weight[(4)*WW-1 -: WW];
+    assign w11 =  conv_weight[(5)*WW-1 -: WW];
+    assign w12 =  conv_weight[(6)*WW-1 -: WW];
+    assign w20 =  conv_weight[(7)*WW-1 -: WW];
+    assign w21 =  conv_weight[(8)*WW-1 -: WW];
+    assign w22 =  conv_weight[(9)*WW-1 -: WW];
 
     // ---------------------------------
     // mul instance
@@ -97,33 +110,29 @@ module conv3x3_kernel #(
     mul #(.WI(WI)) u_mul_21 (.w(w21), .x(a21), .y(p21));
     mul #(.WI(WI)) u_mul_22 (.w(w22), .x(a22), .y(p22));
 
-    // ---------------------------------
-    // adder tree 조합 assign
-    // ---------------------------------
-    assign sum_products =
-          {{(ACCW-(DATAW+WW)){p00[DATAW+WW-1]}}, p00}
-        + {{(ACCW-(DATAW+WW)){p01[DATAW+WW-1]}}, p01}
-        + {{(ACCW-(DATAW+WW)){p02[DATAW+WW-1]}}, p02}
-        + {{(ACCW-(DATAW+WW)){p10[DATAW+WW-1]}}, p10}
-        + {{(ACCW-(DATAW+WW)){p11[DATAW+WW-1]}}, p11}
-        + {{(ACCW-(DATAW+WW)){p12[DATAW+WW-1]}}, p12}
-        + {{(ACCW-(DATAW+WW)){p20[DATAW+WW-1]}}, p20}
-        + {{(ACCW-(DATAW+WW)){p21[DATAW+WW-1]}}, p21}
-        + {{(ACCW-(DATAW+WW)){p22[DATAW+WW-1]}}, p22};
+ // sign-extend helper
+    function [ACCW-1:0] sx;
+        input signed [PRODW-1:0] v;
+        begin sx = {{(ACCW-PRODW){v[PRODW-1]}}, v}; end
+    endfunction
 
-    assign sum_with_bias = sum_products + {{(ACCW-BW){b[BW-1]}}, b};
+    // 한 번에 조합 합산
+    wire signed [ACCW-1:0] sum_products =
+          sx(p00)+sx(p01)+sx(p02)
+        + sx(p10)+sx(p11)+sx(p12)
+        + sx(p20)+sx(p21)+sx(p22);
 
-    // ---------------------------------
-    // output 
-    // ---------------------------------
+    wire signed [ACCW-1:0] sum_with_bias =
+        sum_products + {{(ACCW-BW){conv_bias[BW-1]}}, conv_bias};
+
+    // 출력 1단 레지스터 → LAT_kernel = 1
     always @(posedge iClk) begin
         if (!iRsn) begin
             oOutValid <= 1'b0;
-            oOutData  <= '0;
+            oOutData  <= {ACCW{1'b0}};
         end else begin
-            oOutValid <= iInValid;
-            oOutData  <= sum_with_bias;
+            oOutValid <= iInValid;      // 같은 단계로 valid 동행
+            oOutData  <= sum_with_bias; // data
         end
     end
-
 endmodule
