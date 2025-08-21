@@ -14,9 +14,10 @@ module sliding_3x3window #(
     
     output reg [3*PIX_W-1:0]    oWindowOutRow1,           // 3x3 window output, row 1
     output reg [3*PIX_W-1:0]    oWindowOutRow2,           // 3x3 window output, row 2
-    output reg [3*PIX_W-1:0]    oWindowOutRow3            // 3x3 window output, row 3
+    output reg [3*PIX_W-1:0]    oWindowOutRow3,            // 3x3 window output, row 3
+    output reg                 oWindowValid,
+    output reg                 oMapDone
 );
-
     // wire & reg
     reg [PIX_W-1:0] line0 [0:IMG_W-1];  // top
     reg [PIX_W-1:0] line1 [0:IMG_W-1];  // mid
@@ -30,6 +31,7 @@ module sliding_3x3window #(
 
 
     reg rWindowValid;
+    reg rMapDone;
 
     integer i;
 
@@ -39,6 +41,8 @@ module sliding_3x3window #(
             rColCount    <= 5'd0;
             rRowCount    <= 5'd0;
             rWindowValid <= 1'b0;
+            rMapDone     <= 1'b0;
+
         end else begin
             if (iPixelValid) begin
                 // ----- 픽셀 쓰기 -----
@@ -73,19 +77,37 @@ module sliding_3x3window #(
                     rWindowValid <= 1'b1;
                 else
                     rWindowValid <= 1'b0;
+
+                if ((rRowCount == (IMG_W-1)) && (rColCount == (IMG_W-1))) 
+                    rMapDone <= 1'b1;
+                else 
+                    rMapDone <= 1'b0;
+
+                end else begin
+                    rWindowValid <= 1'b0;
+                    rMapDone     <= 1'b0;
             end
         end
     end
-
+    reg window_valid_q, map_done_q;
     always @(posedge iClk) begin
         if (!iRsn) begin
-            col_q    <= 5'd0;
-            row_q    <= 5'd0;
-            window_q <= 1'b0;
-        end else if (iPixelValid) begin
-            col_q    <= rColCount;                              // 현재 인덱스를 1싸이클 지연
-            row_q    <= rRowCount;
-            window_q <= (rRowCount >= 5'd2) && (rColCount >= 5'd2);
+            col_q          <= 5'd0;
+            row_q          <= 5'd0;
+            window_q       <= 1'b0;
+            window_valid_q <= 1'b0;
+            map_done_q     <= 1'b0;
+        end else begin
+            if (iPixelValid) begin
+                col_q          <= rColCount;
+                row_q          <= rRowCount;
+                window_q       <= (rRowCount >= 5'd2) && (rColCount >= 5'd2);
+                window_valid_q <= rWindowValid; // 1-cycle latency
+                map_done_q     <= rMapDone;      // 1-cycle latency
+            end else begin
+                window_valid_q <= 1'b0;
+                map_done_q     <= 1'b0;
+            end
         end
     end
 
@@ -101,5 +123,9 @@ module sliding_3x3window #(
             oWindowOutRow3 = {(3*PIX_W){1'b0}};
         end
     end
+    
+    // Assign outputs
+    assign oWindowValid = window_valid_q;
+    assign oMapDone     = map_done_q;
 
 endmodule
