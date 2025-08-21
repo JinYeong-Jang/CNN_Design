@@ -5,7 +5,7 @@ module pool_relu #(
     input  wire                      clk,
     input  wire                      clr,         // sync, active-high
     input  wire                      in_valid,    // 1 pixel / clk
-    input  wire signed [In_d_W-1:0]  in_data,     // [31:0]signed pixel 
+    input  wire signed [In_d_W-1:0]  in_data,     // [31:0] signed pixel
 
     output reg                       out_valid,
     output reg signed [In_d_W-1:0]   out_data // [31:0]
@@ -110,5 +110,3 @@ module pool_relu #(
         end
     end
 endmodule
-
-
