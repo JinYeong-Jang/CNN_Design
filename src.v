@@ -6,7 +6,10 @@ module pool_relu #(
     input  wire                      clr,         // sync, active-high
     input  wire                      in_valid,    // 1 pixel / clk
     input  wire signed [In_d_W-1:0]  in_data,     // [31:0] signed pixel
-
+    input  wire signed [In_d_W-1:0]  a; //max-pooling input
+    input  wire signed [In_d_W-1:0]  b; //max-pooling input
+    input  wire signed [In_d_W-1:0]  x; //ReLU input
+    
     output reg                       out_valid,
     output reg signed [In_d_W-1:0]   out_data // [31:0]
 );
@@ -28,14 +31,12 @@ module pool_relu #(
 
     // Signed max and ReLU
     function [In_d_W-1:0] maxpool;
-        input signed [In_d_W-1:0] a, b;
         begin
             if (a >= b) maxpool = a; else maxpool = b;
         end
     endfunction
 
     function [In_d_W-1:0] relu;
-        input signed [In_d_W-1:0] x;
         begin
             if (x[In_d_W-1]) relu = {In_d_W{1'b0}}; else relu = x;
         end
@@ -110,3 +111,4 @@ module pool_relu #(
         end
     end
 endmodule
+
