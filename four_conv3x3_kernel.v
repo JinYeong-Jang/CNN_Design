@@ -78,25 +78,25 @@ module conv3x3_wrapper #(
     wire v0,v1,v2,v3;
     wire signed [ACCW-1:0] y0,y1,y2,y3;
 
-    conv3x3_kernel #(.WI(WI),.BW(BW),.ACCW(ACCW)) PE0 (
+    conv3x3 #(.WI(WI),.BW(BW),.ACCW(ACCW)) PE0 (
         .iClk(iClk), .iRsn(iRsn), .iInValid(iInValid),
         .iWindowInRow1(iWindowInRow1), .iWindowInRow2(iWindowInRow2), .iWindowInRow3(iWindowInRow3),
         .conv_weight(w_flat0), .conv_bias(b0),
         .oOutValid(v0), .oOutData(y0)
     );
-    conv3x3_kernel #(.WI(WI),.BW(BW),.ACCW(ACCW)) PE1 (
+    conv3x3 #(.WI(WI),.BW(BW),.ACCW(ACCW)) PE1 (
         .iClk(iClk), .iRsn(iRsn), .iInValid(iInValid),
         .iWindowInRow1(iWindowInRow1), .iWindowInRow2(iWindowInRow2), .iWindowInRow3(iWindowInRow3),
         .conv_weight(w_flat1), .conv_bias(b1),
         .oOutValid(v1), .oOutData(y1)
     );
-    conv3x3_kernel #(.WI(WI),.BW(BW), .ACCW(ACCW)) PE2 (
+    conv3x3 #(.WI(WI),.BW(BW), .ACCW(ACCW)) PE2 (
         .iClk(iClk), .iRsn(iRsn), .iInValid(iInValid),
         .iWindowInRow1(iWindowInRow1), .iWindowInRow2(iWindowInRow2), .iWindowInRow3(iWindowInRow3),
         .conv_weight(w_flat2), .conv_bias(b2),
         .oOutValid(v2), .oOutData(y2)
     );
-    conv3x3_kernel #(.WI(WI),.BW(BW), .ACCW(ACCW)) PE3 (
+    conv3x3 #(.WI(WI),.BW(BW), .ACCW(ACCW)) PE3 (
         .iClk(iClk), .iRsn(iRsn), .iInValid(iInValid),
         .iWindowInRow1(iWindowInRow1), .iWindowInRow2(iWindowInRow2), .iWindowInRow3(iWindowInRow3),
         .conv_weight(w_flat3), .conv_bias(b3),
@@ -124,4 +124,5 @@ module conv3x3_wrapper #(
     assign oValid4 = oValid4_r;  // valid도 data와 같은 클럭에 유효
 
 endmodule
+
 
