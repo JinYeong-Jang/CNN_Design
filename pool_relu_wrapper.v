@@ -1,32 +1,82 @@
-// 4-lane wrapper for pool_relu
 module pool_relu_wrapper #(
     parameter In_d_W = 32,
     parameter W      = 26
 )(
-    input  wire                     clk,
-    input  wire                     clr,
-    input  wire [3:0]               in_valid,                       // [채널3:채널0]
-    input  wire signed [4*In_d_W-1:0] in_data,                      // 채널별 In_d_W비트 패킹
-    output wire [3:0]               out_valid,                      // [채널3:채널0]
-    output wire signed [4*In_d_W-1:0] out_data                      // 채널별 In_d_W비트 패킹
+    input                         iClk,
+    input                         iRsn,       // active-low
+
+    input   [3:0]                iValid4,
+    input signed [In_d_W-1:0]    iData0,     // [31:0] signed pixel
+    input signed [In_d_W-1:0]    iData1,     
+    input signed [In_d_W-1:0]    iData2,     
+    input signed [In_d_W-1:0]    iData3,     
+
+    output [3:0]                        oValid4,
+    output reg signed [In_d_W-1:0]      oData0,     // [31:0] signed pixel
+    output reg signed [In_d_W-1:0]      oData1,
+    output reg signed [In_d_W-1:0]      oData2,
+    output reg signed [In_d_W-1:0]      oData3
 );
 
-    genvar i;
-    generate
-        for (i = 0; i < 4; i = i + 1) begin : g_lane
-            pool_relu #(
-                .In_d_W (In_d_W),
-                .W      (W)
-            ) u_lane (
-                .clk      (clk),
-                .clr      (clr),
-                .in_valid (in_valid[i]),
-                .in_data  (in_data [(i+1)*In_d_W-1 -: In_d_W]),
-                .out_valid(out_valid[i]),
-                .out_data (out_data[(i+1)*In_d_W-1 -: In_d_W])
-            );
+    wire rst_ah = ~iRsn;    // change to active-high reset
+    wire oValid0, oValid1, oValid2, oValid3;    // oValid per channel
+    wire signed [In_d_W-1:0] y0, y1, y2, y3;    // output per channel
+  
+
+    pool_relu #(.In_d_W(In_d_W),.W(W)) PE0 (
+        .iClk(iClk), 
+        .iRsn(rst_ah),     // active-high
+        .iInValid(iValid4[0]),
+        .iPoolData(iData0),
+        .oOutValid(oValid0), 
+        .oOutData(y0)
+    );
+
+        pool_relu #(.In_d_W(In_d_W),.W(W)) PE1 (
+        .iClk(iClk), 
+        .iRsn(rst_ah), 
+        .iInValid(iValid4[1]),
+        .iPoolData(iData1),
+        .oOutValid(oValid1), 
+        .oOutData(y1)
+    );
+
+    pool_relu #(.In_d_W(In_d_W),.W(W)) PE2 (
+        .iClk(iClk), 
+        .iRsn(rst_ah), 
+        .iInValid(iValid4[2]),
+        .iPoolData(iData2),
+        .oOutValid(oValid2), 
+        .oOutData(y2)
+    );
+
+    pool_relu #(.In_d_W(In_d_W),.W(W)) PE3 (
+        .iClk(iClk), 
+        .iRsn(rst_ah), 
+        .iInValid(iValid4[3]),
+        .iPoolData(iData3),
+        .oOutValid(oValid3), 
+        .oOutData(y3)
+    );
+
+    // ---------- Output alignment: register data and valid in the same stage ----------
+    reg [3:0] reg_oValid4;
+    always @(posedge iClk) begin
+        if (!iRsn) begin
+            reg_oValid4 <= 4'b0000;
+            oData0    <= {In_d_W{1'b0}};
+            oData1    <= {In_d_W{1'b0}};
+            oData2    <= {In_d_W{1'b0}};
+            oData3    <= {In_d_W{1'b0}};
+        end else begin
+            reg_oValid4 <= {oValid3, oValid2, oValid1, oValid0};
+            oData0    <= y0;
+            oData1    <= y1;
+            oData2    <= y2;
+            oData3    <= y3;
         end
-    endgenerate
+    end
+    assign oValid4 = reg_oValid4; 
 
 endmodule
 
