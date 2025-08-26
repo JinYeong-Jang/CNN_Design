@@ -68,6 +68,27 @@ module top_module #(
         .oData3        (wData3)
     );
 
+        // -------- pool_relu 4개--------
+    pool_relu_wrapper #(
+        .In_d_W   (In_d_W),
+        .W (W)
+    ) u_four (
+        .iClk          (iClk),
+        .iRsn          (iRsn),
+        
+        .iValid4       (iValid4),
+        .iData0        (iData0),
+        .iData1        (iData1),
+        .iData2        (iData2),
+        .iData3        (iData3),
+
+        .oValid4       (wValid4),       // [v3 v2 v1 v0]
+        .oData0        (wData0),
+        .oData1        (wData1),
+        .oData2        (wData2),
+        .oData3        (wData3)
+    );
+
 endmodule
 
 
