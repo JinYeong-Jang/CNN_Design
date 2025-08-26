@@ -24,7 +24,7 @@ module cnn_top #(
 
     // conv_3x3_window 모듈 인스턴스화
     // 이 모듈은 iPixelIn을 받아 wWindowInRow* 출력을 생성한다고 가정합니다.
-    conv3x3_window #(
+    sliding_3x3window #(
         .WI(WI)
     ) u_sliding_window (
         .iClk(iClk),
@@ -61,3 +61,4 @@ module cnn_top #(
 
 
 endmodule
+
