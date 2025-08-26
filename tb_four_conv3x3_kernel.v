@@ -1,5 +1,5 @@
 `timescale 1ns/1ps
-module tb_four_conv3x3_kernel;
+module tb_conv3x3_wrapper;
 
     // ===== 환경 파라미터 =====
     localparam integer WI    = 8;    // input/weight bit width (signed)
@@ -31,7 +31,7 @@ module tb_four_conv3x3_kernel;
     wire signed [ACCW-1:0]   oData0, oData1, oData2, oData3;
 
     // ===== DUT 인스턴스 =====
-    four_conv3x3_kernel #(
+    conv3x3_wrapper #(
         .WI(WI), .BW(BW), .ACCW(ACCW)
     ) dut (
         .iClk(iClk),
@@ -311,3 +311,4 @@ module tb_four_conv3x3_kernel;
     end
 
 endmodule
+
