@@ -31,11 +31,11 @@ module top_module #(
     wire [3:0]          wValid4;
 
     // -------- pool_relu 4개 출력선 --------
-    wire [In_d_W-1:0]     relu_wData0;
-    wire [In_d_W-1:0]     relu_wData1;
-    wire [In_d_W-1:0]     relu_wData2;
-    wire [In_d_W-1:0]     relu_wData3;
-    wire [3:0]            relu_wValid4;
+    wire signed [In_d_W-1:0]     relu_wData0;
+    wire signed [In_d_W-1:0]     relu_wData1;
+    wire signed [In_d_W-1:0]     relu_wData2;
+    wire signed [In_d_W-1:0]     relu_wData3;
+    wire [3:0]                   relu_wValid4;
     
   sliding_3x3window #(
         .IMG_W (IMG_W),
