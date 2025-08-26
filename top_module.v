@@ -72,21 +72,21 @@ module top_module #(
     pool_relu_wrapper #(
         .In_d_W   (In_d_W),
         .W (W)
-    ) u_four (
+    ) u_four_pool_relu (
         .iClk          (iClk),
         .iRsn          (iRsn),
         
         .iValid4       (iValid4),
-        .iData0        (iData0),
-        .iData1        (iData1),
-        .iData2        (iData2),
-        .iData3        (iData3),
+        .iData0        (wData0),
+        .iData1        (wData1),
+        .iData2        (wData2),
+        .iData3        (wData3),
 
-        .oValid4       (wValid4),       // [v3 v2 v1 v0]
-        .oData0        (wData0),
-        .oData1        (wData1),
-        .oData2        (wData2),
-        .oData3        (wData3)
+        .oValid4       (wValid4),       
+        .oData0        (wreluData0),
+        .oData1        (wreluData1),
+        .oData2        (wreluData2),
+        .oData3        (wreluData3)
     );
 
 endmodule
