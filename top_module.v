@@ -3,7 +3,9 @@ module top_module #(
     parameter integer PIX_W  = 8,   // pixel bit width
     parameter integer WI     = 8,   // four_conv3x3_kernel.WI (== PIX_W 권장)
     parameter integer BW     = 32,
-    parameter integer ACCW   = 32
+    parameter integer ACCW   = 32,
+    parameter integer In_d_W = 32,  // pool_relu input data width
+    parameter integer W      = 26   // input feature map column count
 )(
     input            iClk,
     input            iRsn,      // active-low reset
