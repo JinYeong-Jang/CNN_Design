@@ -1,4 +1,4 @@
-module conv3x3_kernel #(
+module conv3x3 #(
     parameter integer WI    = 8,
     parameter integer BW    = 32,
     parameter integer ACCW  = 32
