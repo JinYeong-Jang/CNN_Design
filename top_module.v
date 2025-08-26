@@ -30,6 +30,13 @@ module top_module #(
     wire [ACCW-1:0]     wData3;
     wire [3:0]          wValid4;
 
+    // -------- pool_relu 4개 출력선 --------
+    wire [In_d_W-1:0]     relu_wData0;
+    wire [In_d_W-1:0]     relu_wData1;
+    wire [In_d_W-1:0]     relu_wData2;
+    wire [In_d_W-1:0]     relu_wData3;
+    wire [3:0]            relu_wValid4;
+    
   sliding_3x3window #(
         .IMG_W (IMG_W),
         .PIX_W (PIX_W)
@@ -76,17 +83,17 @@ module top_module #(
         .iClk          (iClk),
         .iRsn          (iRsn),
         
-        .iValid4       (iValid4),
+        .iValid4       (wValid4),
         .iData0        (wData0),
         .iData1        (wData1),
         .iData2        (wData2),
         .iData3        (wData3),
 
-        .oValid4       (wValid4),       
-        .oData0        (wreluData0),
-        .oData1        (wreluData1),
-        .oData2        (wreluData2),
-        .oData3        (wreluData3)
+        .oValid4       (relu_wValid4),       
+        .oData0        (relu_wData0),
+        .oData1        (relu_wData1),
+        .oData2        (relu_wData2),
+        .oData3        (relu_wData3)
     );
 
 endmodule
