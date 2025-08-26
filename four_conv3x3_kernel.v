@@ -1,4 +1,4 @@
-module four_conv3x3_kernel #(
+module conv3x3_wrapper #(
     parameter integer WI    = 8,
     parameter integer BW    = 32,
     parameter integer ACCW  = 32
@@ -124,3 +124,4 @@ module four_conv3x3_kernel #(
     assign oValid4 = oValid4_r;  // valid도 data와 같은 클럭에 유효
 
 endmodule
+
