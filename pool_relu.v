@@ -51,12 +51,19 @@ module pool_relu #(
     assign odd_pix_left  = odd_row[(In_d_W*col_cnt)-1 -: In_d_W];
     assign odd_pix_right = odd_row[(In_d_W*(col_cnt+1))-1 -: In_d_W];
 
-    // >>> Combinational 2x2 pooling for "this" cycle window
-    // bottom-left  should be previous sample (even_s0)
-    // bottom-right should be current sample  (iPoolData)
-    wire signed [In_d_W-1:0] max_ab_now = maxpool(odd_pix_left,  odd_pix_right); // top row
-    wire signed [In_d_W-1:0] max_cd_now = maxpool(even_s0,       iPoolData);       // bottom row
-    wire signed [In_d_W-1:0] pool_now   = maxpool(max_ab_now,    max_cd_now);    // 2x2 max
+    // ── 원시 조합 결과(항상 계산) ────────────────────────────────────────────────
+    wire signed [In_d_W-1:0] max_ab_raw = maxpool(odd_pix_left,  odd_pix_right); // top: odd row
+    wire signed [In_d_W-1:0] max_cd_raw = maxpool(even_s0,       iPoolData);     // bot: even row
+
+    // ── 출력 타이밍(짝수행 & 짝수열)에서만 **보이게** 게이팅 ─────────────────────
+    // col_cnt 홀수(1,3,5,...) → 윈도우 왼쪽 열 = col_cnt-1 이 짝수
+    wire do_calc = (state == S_LOAD_EVEN) && iInValid && (col_cnt != 0) && (col_cnt < W);
+    wire do_emit = do_calc && (col_cnt[0] == 1'b1);
+
+    // 파형 보기용: 타이밍이 아닐 땐 0으로 보여서 헷갈림 방지
+    wire signed [In_d_W-1:0] max_ab_now = do_emit ? max_ab_raw : {In_d_W{1'b0}};
+    wire signed [In_d_W-1:0] max_cd_now = do_emit ? max_cd_raw : {In_d_W{1'b0}};
+    wire signed [In_d_W-1:0] pool_now   = do_emit ? maxpool(max_ab_raw, max_cd_raw) : {In_d_W{1'b0}};
 
     always @(posedge iClk) begin
         if (iRsn) begin
@@ -96,7 +103,7 @@ module pool_relu #(
                         even_s0 <= iPoolData;   // previous <= current
 
                         // When col_cnt is odd, we have [col_cnt-1, col_cnt] window ready
-                        if (col_cnt[0] == 1'b1) begin
+                        if (do_emit) begin
                             // Use combinational pool_now to avoid 1-cycle latency
                             oOutData  <= relu(pool_now);
                             oOutValid <= 1'b1;
@@ -123,6 +130,4 @@ module pool_relu #(
         end
     end
 endmodule
-
-
 
