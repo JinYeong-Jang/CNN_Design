@@ -4,8 +4,8 @@ module tb_pool_relu_wrapper;
 
     // ===== Parameters =====
     localparam In_d_W = 32;
-    localparam W      = 26;   
-    localparam H      = 28;    
+    localparam W      = 26;   // 입력 가로 폭
+    localparam H      = 28;    // 테스트용 입력 세로 높이(짝수 권장)
     localparam W_OUT  = W/2;  // stride=2, no padding -> 출력 가로
     localparam H_OUT  = H/2;  // stride=2, no padding -> 출력 세로
     localparam N_OUT  = W_OUT*H_OUT;
@@ -226,4 +226,3 @@ module tb_pool_relu_wrapper;
     end
 
 endmodule
-
