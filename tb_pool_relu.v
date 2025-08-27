@@ -31,7 +31,7 @@ module tb_pool_relu;
 
     integer out_cnt;
 
-    // ---- 랜덤 한 행을 구동: −10..10 정수 생성 ----
+    // ---- random 행을 구동: -10..10 정수 생성 ----
     task drive_row_random;
         input odd_row;      // 1=odd, 0=even (구조 유지용)
         integer c;
@@ -50,9 +50,6 @@ module tb_pool_relu;
                 s = u - 10;         // -10..10
 
                 iPoolData <= s;
-
-                // 확인용 로그 
-                // $display("[%0t] drive row=%0d col=%0d data=%0d", $time, odd_row, c, s);
             end
 
             // 행 간 간격 1사이클
@@ -71,7 +68,7 @@ module tb_pool_relu;
     end
 
     initial begin
-        // 초기화
+        // reset
         iInValid = 1'b0;
         iPoolData  = 0;
         iRsn      = 1'b1;
@@ -87,7 +84,7 @@ module tb_pool_relu;
         drive_row_random(1'b1);   // row 3
         drive_row_random(1'b0);   // row 4 → 13개 출력
 
-        // 파이프라인 드레인
+        // pipeline drain
         repeat (10) @(posedge iClk);
 
         $display("INFO: total outputs = %0d (expected ~%0d)", out_cnt, (W/2)*2);
