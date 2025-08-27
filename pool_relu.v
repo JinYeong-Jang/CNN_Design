@@ -45,7 +45,7 @@ module pool_relu #(
         end
     endfunction
 
-    // Slices from odd_row for current window columns (left = col_cnt-1, right = col_cnt)
+    // Slices from odd_row for current window columns (left = col_cnt, right = col_cnt+1)
     wire signed [In_d_W-1:0] odd_pix_left;
     wire signed [In_d_W-1:0] odd_pix_right;
     assign odd_pix_left  = odd_row[(In_d_W*col_cnt)-1 -: In_d_W];
@@ -123,5 +123,6 @@ module pool_relu #(
         end
     end
 endmodule
+
 
 
