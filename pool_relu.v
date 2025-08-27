@@ -21,6 +21,9 @@ module pool_relu #(
 
     // Column counter 0..W-1
     reg [$clog2(W):0] col_cnt; // [5:0]
+   
+    // Row counter 0..W-1
+    reg [$clog2(W):0] row_cnt; // [5:0]
 
     // Even-row shift regs (hold previous two samples)
     reg signed [In_d_W-1:0] even_s0;  // previous sample
@@ -59,6 +62,7 @@ module pool_relu #(
         if (iRsn) begin
             state     <= S_LOAD_ODD;
             col_cnt   <= 0;
+            row_cnt   <= 0;
             odd_row   <= {In_d_W*W{1'b0}};
             even_s0   <= {In_d_W{1'b0}};
             even_s1   <= {In_d_W{1'b0}};
@@ -77,6 +81,7 @@ module pool_relu #(
                         if (col_cnt + 1 == W) begin
                             state   <= S_LOAD_EVEN;
                             col_cnt <= 0;
+                            row_cnt <= row_cnt + 1;
                             // Clear even-row shifters
                             even_s0 <= {In_d_W{1'b0}};
                             even_s1 <= {In_d_W{1'b0}};
@@ -102,6 +107,13 @@ module pool_relu #(
                         if (col_cnt + 1 == W) begin
                             state   <= S_LOAD_ODD;
                             col_cnt <= 0;
+                            row_cnt <= row_cnt + 1;
+                        end
+
+                        if (row_cnt + 1 == W) begin
+                            state   <= S_LOAD_ODD;
+                            col_cnt <= 0;
+                            row_cnt <= 0;
                         end
                     end
                 end
@@ -111,3 +123,4 @@ module pool_relu #(
         end
     end
 endmodule
+
