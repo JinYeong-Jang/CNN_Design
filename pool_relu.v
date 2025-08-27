@@ -110,7 +110,7 @@ module pool_relu #(
                             row_cnt <= row_cnt + 1;
                         end
 
-                        if (row_cnt + 1 == W) begin
+                        if ((row_cnt + 1 == W) && (col_cnt + 1 == W)) begin
                             state   <= S_LOAD_ODD;
                             col_cnt <= 0;
                             row_cnt <= 0;
