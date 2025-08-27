@@ -6,6 +6,9 @@ module top_module #(
     parameter integer ACCW   = 32,
     parameter integer In_d_W = 32,  // pool_relu input data width
     parameter integer W      = 26   // input feature map column count
+    parameter integer FEAT_W_FC = In_d_W;     // FC input width
+    parameter integer WGT_W_FC  = 8;
+    parameter integer ACC_W_FC  = (FEAT_W_FC + WGT_W_FC) + 12;
 )(
     input            iClk,
     input            iRsn,      // active-low reset
@@ -13,9 +16,9 @@ module top_module #(
     input            iPixelValid,
 
     //output은 최종 결과물(동균이형) 이 블록에 맞게 설정해주세요
-    output wire oLogitValid, // frame done pulse (one cycle)
-    output wire signed [((In_d_W+8)+12)-1:0] oLogit, // ACC_W_FC = (FEAT_W + WGT_W) + 12
-    output wire oClass
+    output  oLogitValid, // frame done pulse (one cycle)
+    output  signed [((In_d_W+8)+12)-1:0] oLogit, // ACC_W_FC = (FEAT_W + WGT_W) + 12
+    output  oClass
 );  
 
     // -------- Sliding window 출력선 --------
@@ -99,10 +102,6 @@ module top_module #(
         .oData3        (relu_wData3)
     );
 
-    // -------- FC 제어 생성 (in_run one-shot) --------
-    localparam integer FEAT_W_FC = In_d_W;     // FC input width
-    localparam integer WGT_W_FC  = 8;
-    localparam integer ACC_W_FC  = (FEAT_W_FC + WGT_W_FC) + 12;
 
     wire any_valid = |relu_wValid4;   // reduction OR: 4비트 중 하나라도 1이면 1
 
