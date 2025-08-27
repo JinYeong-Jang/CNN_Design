@@ -32,8 +32,8 @@ module pool_relu #(
 
     // Signed max and ReLU
     function [In_d_W-1:0] maxpool;
-            input signed [In_d_W-1:0] a, b;
-            begin
+        input signed [In_d_W-1:0] a, b;
+        begin
             if (a >= b) maxpool = a; else maxpool = b;
         end
     endfunction
@@ -123,4 +123,5 @@ module pool_relu #(
         end
     end
 endmodule
+
 
