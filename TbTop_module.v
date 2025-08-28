@@ -1,6 +1,6 @@
 `timescale 1ns/10ps
 
-module Tbtop_cnn;
+module Tbtop_module;
 
 // ----------------------------
 // Parameters (DUT와 동일하게)
